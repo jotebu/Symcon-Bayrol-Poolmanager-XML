@@ -32,7 +32,9 @@ final class BPMXML_VariableGenerator
             ];
         }
 
-        usort($proposals, static fn(array $a, array $b): int => [$a['category'], $a['name']] <=> [$b['category'], $b['name']]);
+        usort($proposals, static function (array $a, array $b): int {
+            return [$a['category'], $a['name']] <=> [$b['category'], $b['name']];
+        });
         return $proposals;
     }
 
@@ -47,15 +49,27 @@ final class BPMXML_VariableGenerator
 
     private function categoryForClass(string $class): string
     {
-        return match ($class) {
-            'alarm' => 'Alarms',
-            'setpoint' => 'Setpoints',
-            'limit' => 'Limits',
-            'status', 'output_status', 'output_or_device_state', 'digital_status_or_config', 'operating_mode' => 'Status',
-            'timer_or_runtime', 'counter_or_statistic' => 'Statistics',
-            'calibration' => 'Calibration',
-            default => 'Measurements'
-        };
+        switch ($class) {
+            case 'alarm':
+                return 'Alarms';
+            case 'setpoint':
+                return 'Setpoints';
+            case 'limit':
+                return 'Limits';
+            case 'status':
+            case 'output_status':
+            case 'output_or_device_state':
+            case 'digital_status_or_config':
+            case 'operating_mode':
+                return 'Status';
+            case 'timer_or_runtime':
+            case 'counter_or_statistic':
+                return 'Statistics';
+            case 'calibration':
+                return 'Calibration';
+            default:
+                return 'Measurements';
+        }
     }
 
     private function variableType(string $class, array $attributes): string
