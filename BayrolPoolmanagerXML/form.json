@@ -13,7 +13,7 @@
       "type": "ExpansionPanel",
       "caption": "XML Explorer",
       "items": [
-        { "type": "Label", "caption": "Durchsucht XML-Adressen des PoolManagers und speichert gefundene Antworten als CSV und JSON in der Instanz. Empfehlung: zuerst kleine Bereiche scannen, z. B. Typ 34 von 4000 bis 4100." },
+        { "type": "Label", "caption": "Freier Scan oder vordefinierte Bereiche. Ergebnisse werden als CSV/JSON im Objektbaum gespeichert. Snapshot A/B dient zum Erkennen geaenderter XML-Adressen nach einer Bedienhandlung am PM5." },
         { "type": "NumberSpinner", "name": "ExplorerType", "caption": "XML-Typ", "minimum": 0 },
         { "type": "NumberSpinner", "name": "ExplorerStart", "caption": "Start-ID", "minimum": 0 },
         { "type": "NumberSpinner", "name": "ExplorerEnd", "caption": "End-ID", "minimum": 0 },
@@ -26,7 +26,7 @@
       "type": "ExpansionPanel",
       "caption": "Schreibfreigaben - sicher vorbereitet, aktuell noch kein Schreiben zum PoolManager",
       "items": [
-        { "type": "Label", "caption": "Standard ist strikt read-only. Auch bei gesetzter Freigabe wird aktuell noch kein Wert geschrieben; die Schalter bereiten nur die spaetere sichere Schreibfunktion vor." },
+        { "type": "Label", "caption": "Standard ist strikt read-only. Auch bei gesetzter Freigabe wird aktuell noch kein Wert geschrieben." },
         { "type": "CheckBox", "name": "EnableWritePreparation", "caption": "Schreibfunktionen grundsaetzlich vorbereiten" },
         { "type": "CheckBox", "name": "AllowWriteSetpointPH", "caption": "Sollwert pH freigeben" },
         { "type": "CheckBox", "name": "AllowWriteSetpointChlorineBromine", "caption": "Sollwert Chlor / Brom freigeben" },
@@ -38,6 +38,13 @@
   "actions": [
     { "type": "Button", "caption": "Jetzt aktualisieren", "onClick": "BPMXML_Update($id);" },
     { "type": "Button", "caption": "XML Explorer starten", "onClick": "BPMXML_RunExplorer($id);" },
+    { "type": "Button", "caption": "Preset: Messwerte 34.4000-4100", "onClick": "BPMXML_RunExplorerMeasurements($id);" },
+    { "type": "Button", "caption": "Preset: Sollwerte 34.3000-3100", "onClick": "BPMXML_RunExplorerSetpoints($id);" },
+    { "type": "Button", "caption": "Preset: Alarme 44.2000-2050", "onClick": "BPMXML_RunExplorerAlarms($id);" },
+    { "type": "Button", "caption": "Snapshot A speichern", "onClick": "BPMXML_StoreSnapshotA($id);" },
+    { "type": "Button", "caption": "Snapshot B speichern", "onClick": "BPMXML_StoreSnapshotB($id);" },
+    { "type": "Button", "caption": "Snapshot A/B vergleichen", "onClick": "BPMXML_CompareSnapshots($id);" },
+    { "type": "Button", "caption": "PHP-Definition aus Scan erzeugen", "onClick": "BPMXML_GenerateDefinitionFromExplorer($id);" },
     { "type": "Button", "caption": "XML Explorer Ergebnisse loeschen", "onClick": "BPMXML_ClearExplorer($id);" }
   ],
   "status": [
