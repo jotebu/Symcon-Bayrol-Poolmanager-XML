@@ -22,17 +22,15 @@ final class BPMXML_DiscoveryDatabase
                 $db[$key] = [
                     'xmlitem' => $key,
                     'first_seen' => $now,
-                    'scan_count' => 0,
-                    'notes' => '',
-                    'user_mapping' => ''
+                    'scan_count' => 0
                 ];
             }
 
             $db[$key]['last_seen'] = $now;
             $db[$key]['scan_count'] = (int)($db[$key]['scan_count'] ?? 0) + 1;
-            $db[$key]['class'] = $entry['class'] ?? 'unknown';
-            $db[$key]['confidence'] = $entry['confidence'] ?? 0;
-            $db[$key]['attributes'] = $entry['attributes'] ?? [];
+            $db[$key]['class'] = $entry['class'];
+            $db[$key]['confidence'] = $entry['confidence'];
+            $db[$key]['attributes'] = $entry['attributes'];
         }
 
         ksort($db);
