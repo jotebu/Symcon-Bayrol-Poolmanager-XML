@@ -1,0 +1,23 @@
+name: PHP Syntax Check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - feature/refactor-2.1.0
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+
+      - name: Check PHP syntax
+        run: php tools/check_php_syntax.php
