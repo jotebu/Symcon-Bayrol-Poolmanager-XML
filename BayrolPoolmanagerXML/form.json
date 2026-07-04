@@ -3,8 +3,20 @@
     { "type": "ValidationTextBox", "name": "Host", "caption": "IP-Adresse / Hostname", "placeholder": "192.168.55.23" },
     { "type": "NumberSpinner", "name": "Interval", "caption": "Aktualisierungsintervall Sekunden", "minimum": 0 },
     { "type": "NumberSpinner", "name": "Timeout", "caption": "HTTP Timeout Sekunden", "minimum": 1 },
-    { "type": "CheckBox", "name": "ReadSetpoints", "caption": "Sollwerte / Grenzwerte auslesen" },
-    { "type": "CheckBox", "name": "ReadAlarmList", "caption": "Alarmuebersicht als Text auslesen" }
+    { "type": "CheckBox", "name": "ReadSetpoints", "caption": "Sollwerte / Grenzwerte lesen" },
+    { "type": "CheckBox", "name": "ReadAlarmList", "caption": "Alarmuebersicht als Text lesen" },
+    {
+      "type": "ExpansionPanel",
+      "caption": "Schreibfreigaben - aktuell sicher vorbereitet, Schreiben noch deaktiviert",
+      "items": [
+        { "type": "Label", "caption": "Standard: Das Modul liest nur. Diese Freigaben sind fuer spaetere Schreibfunktionen vorbereitet und loesen aktuell noch keine Schreibbefehle zum PoolManager aus." },
+        { "type": "CheckBox", "name": "EnableWritePreparation", "caption": "Schreibfunktionen grundsaetzlich vorbereiten" },
+        { "type": "CheckBox", "name": "AllowWriteSetpointPH", "caption": "Sollwert pH freigeben" },
+        { "type": "CheckBox", "name": "AllowWriteSetpointChlorineBromine", "caption": "Sollwert Chlor / Brom freigeben" },
+        { "type": "CheckBox", "name": "AllowWriteSetpointRedox1", "caption": "Sollwert Redox 1 freigeben" },
+        { "type": "CheckBox", "name": "AllowWriteSetpointRedox2", "caption": "Sollwert Redox 2 freigeben" }
+      ]
+    }
   ],
   "actions": [
     { "type": "Button", "caption": "Jetzt aktualisieren", "onClick": "BPMXML_Update($id);" }
