@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 final class BPMXML_SnapshotComparator
 {
-    public function compare(array $a, array $b): string
+    public static function compare(array $a, array $b): string
     {
-        $mapA = $this->mapByXmlItem($a);
-        $mapB = $this->mapByXmlItem($b);
+        $mapA = self::mapByXmlItem($a);
+        $mapB = self::mapByXmlItem($b);
 
         $relevant = [];
         $ignored = [];
@@ -15,7 +15,7 @@ final class BPMXML_SnapshotComparator
 
         foreach ($mapB as $xmlitem => $entryB) {
             if (!isset($mapA[$xmlitem])) {
-                $line = '+ ' . $this->formatEntry($xmlitem, [], $entryB['attributes'] ?? []);
+                $line = '+ ' . self::formatEntry($xmlitem, [], $entryB['attributes'] ?? []);
                 $relevant[] = $line;
                 $all[] = $line;
                 continue;
@@ -27,9 +27,9 @@ final class BPMXML_SnapshotComparator
                 continue;
             }
 
-            $line = '* ' . $this->formatEntry($xmlitem, $oldAttr, $newAttr);
+            $line = '* ' . self::formatEntry($xmlitem, $oldAttr, $newAttr);
             $all[] = $line;
-            if ($this->isRelevantSwitchChange($oldAttr, $newAttr)) {
+            if (self::isRelevantSwitchChange($oldAttr, $newAttr)) {
                 $relevant[] = $line;
             } else {
                 $ignored[] = $line;
@@ -38,7 +38,7 @@ final class BPMXML_SnapshotComparator
 
         foreach ($mapA as $xmlitem => $entryA) {
             if (!isset($mapB[$xmlitem])) {
-                $line = '- ' . $this->formatEntry($xmlitem, $entryA['attributes'] ?? [], []);
+                $line = '- ' . self::formatEntry($xmlitem, $entryA['attributes'] ?? [], []);
                 $relevant[] = $line;
                 $all[] = $line;
             }
@@ -69,7 +69,7 @@ final class BPMXML_SnapshotComparator
         return implode("\n", $text);
     }
 
-    private function mapByXmlItem(array $data): array
+    private static function mapByXmlItem(array $data): array
     {
         $map = [];
         foreach ($data as $entry) {
@@ -80,7 +80,7 @@ final class BPMXML_SnapshotComparator
         return $map;
     }
 
-    private function isRelevantSwitchChange(array $oldAttr, array $newAttr): bool
+    private static function isRelevantSwitchChange(array $oldAttr, array $newAttr): bool
     {
         $label = strtolower(($newAttr['label'] ?? '') . ' ' . ($oldAttr['label'] ?? ''));
         $unit = (string)($newAttr['unit'] ?? $oldAttr['unit'] ?? '');
@@ -104,10 +104,10 @@ final class BPMXML_SnapshotComparator
             return true;
         }
 
-        return $keywordHit && $oldValue !== $newValue && !$this->isAnalogDrift($oldAttr, $newAttr);
+        return $keywordHit && $oldValue !== $newValue && !self::isAnalogDrift($oldAttr, $newAttr);
     }
 
-    private function isAnalogDrift(array $oldAttr, array $newAttr): bool
+    private static function isAnalogDrift(array $oldAttr, array $newAttr): bool
     {
         $unit = (string)($newAttr['unit'] ?? $oldAttr['unit'] ?? '');
         $oldValue = (string)($oldAttr['value'] ?? '');
@@ -116,7 +116,7 @@ final class BPMXML_SnapshotComparator
         return $oldValue !== $newValue && in_array($unit, $analogUnits, true) && is_numeric($oldValue) && is_numeric($newValue);
     }
 
-    private function formatEntry(string $xmlitem, array $oldAttr, array $newAttr): string
+    private static function formatEntry(string $xmlitem, array $oldAttr, array $newAttr): string
     {
         $label = $newAttr['label'] ?? $oldAttr['label'] ?? '';
         $unit = $newAttr['unit'] ?? $oldAttr['unit'] ?? '';

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 final class BPMXML_DiscoveryExporter
 {
-    public static function toCsv(array $results, bool $includeError = true): string
+    public static function toCsv(array $results, bool $includeError = true, bool $includeClassAndConfidence = true): string
     {
-        $csv = "xmlitem;class;confidence;valid;label;unit;value;active;displayed;attributes;duration_ms";
+        $csv = $includeClassAndConfidence
+            ? "xmlitem;class;confidence;valid;label;unit;value;active;displayed;attributes;duration_ms"
+            : "xmlitem;valid;label;unit;value;active;displayed;attributes;duration_ms";
         if ($includeError) {
             $csv .= ";error";
         }
@@ -14,10 +16,12 @@ final class BPMXML_DiscoveryExporter
 
         foreach ($results as $entry) {
             $a = $entry['attributes'] ?? [];
-            $csv .= self::csv($entry['xmlitem'] ?? '') . ';'
-                . self::csv($entry['class'] ?? '') . ';'
-                . self::csv((string)($entry['confidence'] ?? '')) . ';'
-                . (!empty($entry['valid']) ? '1' : '0') . ';'
+            $csv .= self::csv($entry['xmlitem'] ?? '') . ';';
+            if ($includeClassAndConfidence) {
+                $csv .= self::csv($entry['class'] ?? '') . ';'
+                    . self::csv((string)($entry['confidence'] ?? '')) . ';';
+            }
+            $csv .= (!empty($entry['valid']) ? '1' : '0') . ';'
                 . self::csv($a['label'] ?? '') . ';'
                 . self::csv($a['unit'] ?? '') . ';'
                 . self::csv($a['value'] ?? '') . ';'

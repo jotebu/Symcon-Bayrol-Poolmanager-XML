@@ -4,96 +4,42 @@ declare(strict_types=1);
 
 final class BPMXML_DiscoveryClassifier
 {
-    public function classify(array $attributes): array
+    public static function classify(array $a): array
     {
-        $labelRaw = (string)($attributes['label'] ?? '');
-        $label = mb_strtolower($labelRaw);
-        $unit = (string)($attributes['unit'] ?? '');
-        $value = (string)($attributes['value'] ?? '');
+        $label = strtolower((string)($a['label'] ?? ''));
+        $unit = (string)($a['unit'] ?? '');
+        $value = (string)($a['value'] ?? '');
 
-        if (isset($attributes['active']) || isset($attributes['displayed'])) {
-            return $this->result('alarm', 95, 'active/displayed attributes present');
+        if (isset($a['active']) || isset($a['displayed'])) {
+            return ['class' => 'alarm', 'confidence' => 95];
         }
-
-        if ($this->containsAny($label, ['status', 'zustand', 'state'])) {
-            if ($this->isBooleanLike($value) || $unit === '') {
-                return $this->result('status', 92, 'status keyword and digital-like value');
+        if (strpos($label, 'status') !== false) {
+            return ['class' => 'status', 'confidence' => 90];
+        }
+        if (strpos($label, 'betriebsart') !== false) {
+            return ['class' => 'operating_mode', 'confidence' => 90];
+        }
+        foreach (['out ', 'relais', 'licht', 'pumpe', 'filter', 'heizung', 'solar', 'eco', 'flock', 'salz', 'elektrolyse', 'ventil'] as $kw) {
+            if (strpos($label, $kw) !== false && $unit === '' && ($value === '0' || $value === '1')) {
+                return ['class' => 'output_status', 'confidence' => 88];
             }
-            return $this->result('status', 82, 'status keyword');
         }
-
-        if ($this->containsAny($label, ['betriebsart', 'mode', 'operation mode'])) {
-            return $this->result('operating_mode', 92, 'operating mode keyword');
+        if (strpos($label, 'alarm') !== false || strpos($label, 'grenze') !== false) {
+            return ['class' => 'limit', 'confidence' => 80];
         }
-
-        if ($this->containsAny($label, ['out ', 'out1', 'out2', 'out3', 'out4', 'relais', 'relay', 'licht', 'light', 'lampe', 'pumpe', 'pump', 'filter', 'heizung', 'heater', 'solar', 'eco', 'flock', 'salz', 'elektrolyse', 'ventil', 'valve'])) {
-            if ($unit === '' && $this->isBooleanLike($value)) {
-                return $this->result('output_status', 94, 'output keyword and boolean-like value');
-            }
-            return $this->result('output_or_device_state', 78, 'output/device keyword');
+        if (strpos($label, 'soll') !== false || strpos($label, 'setpoint') !== false) {
+            return ['class' => 'setpoint', 'confidence' => 80];
         }
-
-        if ($this->containsAny($label, ['timer', 'zeit', 'laufzeit', 'duration'])) {
-            return $this->result('timer_or_runtime', 82, 'timer/runtime keyword');
+        if (strpos($label, 'kalib') !== false || preg_match('/(ph|mv|cl).*\d/', $label)) {
+            return ['class' => 'calibration', 'confidence' => 70];
         }
-
-        if ($this->containsAny($label, ['zaehler', 'zähler', 'counter', 'count', 'menge', 'amount', 'runtime', 'hours'])) {
-            return $this->result('counter_or_statistic', 80, 'counter/statistic keyword');
+        if (in_array($unit, ['pH', 'mV', 'mg/l', 'µA', 'mA', '°C', 'C', 'V', 'l', 'min', '%', 'mS/cm'], true)) {
+            return ['class' => 'measurement', 'confidence' => 75];
         }
-
-        if ($this->containsAny($label, ['alarm', 'grenze', 'limit', 'warnung', 'warning'])) {
-            return $this->result('limit', 82, 'alarm/limit keyword');
-        }
-
-        if ($this->containsAny($label, ['soll', 'setpoint', 'target'])) {
-            return $this->result('setpoint', 84, 'setpoint keyword');
-        }
-
-        if ($this->containsAny($label, ['kalib', 'calib']) || preg_match('/(ph|mv|cl).*\d/', $label)) {
-            return $this->result('calibration', 76, 'calibration pattern');
-        }
-
-        if ($this->containsAny($label, ['temperatur', 'temperature', 'temp']) || in_array($unit, ['°C', 'C'], true)) {
-            return $this->result('temperature', 85, 'temperature keyword/unit');
-        }
-
-        $analogUnits = ['pH', 'mV', 'mg/l', 'µA', 'mA', 'V', 'l', 'min', '%', 'mS/cm'];
-        if (in_array($unit, $analogUnits, true)) {
-            return $this->result('measurement', 78, 'analog unit');
-        }
-
-        if ($unit === '' && $this->isBooleanLike($value)) {
-            return $this->result('digital_status_or_config', 62, 'boolean-like numeric value without unit');
-        }
-
         if ($unit === '' && is_numeric($value)) {
-            return $this->result('numeric_status_or_config', 52, 'numeric value without unit');
+            return ['class' => 'numeric_status_or_config', 'confidence' => 50];
         }
 
-        return $this->result('unknown', 20, 'no strong classification signal');
-    }
-
-    private function containsAny(string $text, array $needles): bool
-    {
-        foreach ($needles as $needle) {
-            if (strpos($text, mb_strtolower($needle)) !== false) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private function isBooleanLike(string $value): bool
-    {
-        return in_array($value, ['0', '1', 'true', 'false', 'on', 'off'], true);
-    }
-
-    private function result(string $class, int $confidence, string $reason): array
-    {
-        return [
-            'class' => $class,
-            'confidence' => $confidence,
-            'reason' => $reason
-        ];
+        return ['class' => 'unknown', 'confidence' => 20];
     }
 }
