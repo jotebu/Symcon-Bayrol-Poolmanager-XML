@@ -152,13 +152,8 @@ class BayrolPoolmanagerXML extends IPSModule
     public function RunDiscoveryBatch()
     {
         if (trim($this->ReadPropertyString('Host')) === '') { $this->SetStatus(201); return false; }
-        $typeStart = $this->ReadPropertyInteger('DiscoveryTypeStart'); $typeEnd = $this->ReadPropertyInteger('DiscoveryTypeEnd');
-        $idStart = $this->ReadPropertyInteger('DiscoveryIdStart'); $idEnd = $this->ReadPropertyInteger('DiscoveryIdEnd');
-        if ($typeEnd < $typeStart) { $tmp = $typeStart; $typeStart = $typeEnd; $typeEnd = $tmp; }
-        if ($idEnd < $idStart) { $tmp = $idStart; $idStart = $idEnd; $idEnd = $tmp; }
-        $type = (int)$this->GetValueByIdent('DiscoveryCursorType'); $id = (int)$this->GetValueByIdent('DiscoveryCursorId');
-        if ($type < $typeStart || $type > $typeEnd) { $type = $typeStart; }
-        if ($id < $idStart || $id > $idEnd) { $id = $idStart; }
+        list($typeStart, $typeEnd, $idStart, $idEnd) = BPMXML_DiscoverySchedulerState::normalizeRanges($this->ReadPropertyInteger('DiscoveryTypeStart'), $this->ReadPropertyInteger('DiscoveryTypeEnd'), $this->ReadPropertyInteger('DiscoveryIdStart'), $this->ReadPropertyInteger('DiscoveryIdEnd'));
+        list($type, $id) = BPMXML_DiscoverySchedulerState::normalizeCursor((int)$this->GetValueByIdent('DiscoveryCursorType'), (int)$this->GetValueByIdent('DiscoveryCursorId'), $typeStart, $typeEnd, $idStart, $idEnd);
 
         $max = max(1, min($this->ReadPropertyInteger('DiscoveryMaxPerRun'), 5000));
         $storeRaw = $this->ReadPropertyBoolean('DiscoveryStoreRaw');
@@ -171,16 +166,13 @@ class BayrolPoolmanagerXML extends IPSModule
             $scanned++;
             if (!empty($entry['valid'])) { $valid++; } else { $errors++; }
             if (!$onlyValid || !empty($entry['valid'])) { $results[] = $entry; }
-            $id++;
-            if ($id > $idEnd) { $id = $idStart; $type++; }
+            list($type, $id) = BPMXML_DiscoverySchedulerState::advanceCursor($type, $id, $idStart, $idEnd);
         }
         if ($type > $typeEnd) { $completed = true; $type = $typeEnd; $id = $idEnd; }
 
         $this->SetValueByIdent('DiscoveryCursorType', $type);
         $this->SetValueByIdent('DiscoveryCursorId', $id);
-        $total = max(1, (($typeEnd - $typeStart + 1) * ($idEnd - $idStart + 1)));
-        $done = min($total, max(0, (($type - $typeStart) * ($idEnd - $idStart + 1)) + ($id - $idStart)));
-        $progress = $completed ? 100 : (int)floor(($done / $total) * 100);
+        $progress = BPMXML_DiscoverySchedulerState::progress($type, $id, $typeStart, $typeEnd, $idStart, $idEnd, $completed);
         $this->SetValueByIdent('DiscoveryProgress', $progress);
 
         $db = $this->MergeDiscoveryDB($results);
@@ -208,8 +200,7 @@ class BayrolPoolmanagerXML extends IPSModule
     private function RunDiscoveryRange($typeStart, $typeEnd, $idStart, $idEnd, $title)
     {
         if (trim($this->ReadPropertyString('Host')) === '') { $this->SetStatus(201); return false; }
-        if ($typeEnd < $typeStart) { $tmp = $typeStart; $typeStart = $typeEnd; $typeEnd = $tmp; }
-        if ($idEnd < $idStart) { $tmp = $idStart; $idStart = $idEnd; $idEnd = $tmp; }
+        list($typeStart, $typeEnd, $idStart, $idEnd) = BPMXML_DiscoverySchedulerState::normalizeRanges($typeStart, $typeEnd, $idStart, $idEnd);
         $max = max(1, min($this->ReadPropertyInteger('DiscoveryMaxPerRun'), 5000)); $onlyValid = $this->ReadPropertyBoolean('DiscoveryOnlyValid'); $storeRaw = $this->ReadPropertyBoolean('DiscoveryStoreRaw');
         $results = []; $scanned = 0; $valid = 0; $errors = 0;
         for ($type = $typeStart; $type <= $typeEnd && $scanned < $max; $type++) { for ($id = $idStart; $id <= $idEnd && $scanned < $max; $id++) { $entry = $this->ScanXmlItem($type, $id, $storeRaw); $scanned++; if (!empty($entry['valid'])) { $valid++; } else { $errors++; } if (!$onlyValid || !empty($entry['valid'])) { $results[] = $entry; } } }
