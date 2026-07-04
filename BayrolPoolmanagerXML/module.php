@@ -5,36 +5,36 @@ class BayrolPoolmanagerXML extends IPSModule
     private const TIMER_NAME = 'UpdateTimer';
 
     private const MEASUREMENTS = [
-        4001 => ['ident' => 'PH', 'label' => 'pH', 'unit' => 'pH', 'digits' => 2],
-        4008 => ['ident' => 'ChlorineBromine', 'label' => 'Chlor / Brom', 'unit' => 'mg_l', 'digits' => 2],
-        4022 => ['ident' => 'Redox', 'label' => 'Redox', 'unit' => 'mV', 'digits' => 0],
-        4033 => ['ident' => 'Temperature1', 'label' => 'Temperatur T1', 'unit' => 'C', 'digits' => 1],
-        4047 => ['ident' => 'Battery', 'label' => 'Batterie', 'unit' => 'V', 'digits' => 2],
-        4069 => ['ident' => 'Temperature2', 'label' => 'Temperatur T2', 'unit' => 'C', 'digits' => 1],
-        4071 => ['ident' => 'Temperature3', 'label' => 'Temperatur T3', 'unit' => 'C', 'digits' => 1],
-        4077 => ['ident' => 'O2DosedAmount', 'label' => 'O2 dosierte Menge', 'unit' => 'l', 'digits' => 1]
+        4001 => ['ident' => 'PH', 'label' => 'pH', 'unit' => 'pH'],
+        4008 => ['ident' => 'ChlorineBromine', 'label' => 'Chlor / Brom', 'unit' => 'mg_l'],
+        4022 => ['ident' => 'Redox', 'label' => 'Redox', 'unit' => 'mV'],
+        4033 => ['ident' => 'Temperature1', 'label' => 'Temperatur T1', 'unit' => 'C'],
+        4047 => ['ident' => 'Battery', 'label' => 'Batterie', 'unit' => 'V'],
+        4069 => ['ident' => 'Temperature2', 'label' => 'Temperatur T2', 'unit' => 'C'],
+        4071 => ['ident' => 'Temperature3', 'label' => 'Temperatur T3', 'unit' => 'C'],
+        4077 => ['ident' => 'O2DosedAmount', 'label' => 'O2 dosierte Menge', 'unit' => 'l']
     ];
 
     private const SETPOINTS = [
-        3001 => ['ident' => 'SetpointPH', 'label' => 'Sollwert pH', 'unit' => 'pH', 'digits' => 2],
-        3002 => ['ident' => 'LowerAlarmPH', 'label' => 'Untere Alarmgrenze pH', 'unit' => 'pH', 'digits' => 2],
-        3003 => ['ident' => 'UpperAlarmPH', 'label' => 'Obere Alarmgrenze pH', 'unit' => 'pH', 'digits' => 2],
-        3017 => ['ident' => 'SetpointChlorineBromine', 'label' => 'Sollwert Chlor / Brom', 'unit' => 'mg_l', 'digits' => 2],
-        3018 => ['ident' => 'LowerAlarmChlorineBromine', 'label' => 'Untere Alarmgrenze Chlor / Brom', 'unit' => 'mg_l', 'digits' => 2],
-        3019 => ['ident' => 'UpperAlarmChlorineBromine', 'label' => 'Obere Alarmgrenze Chlor / Brom', 'unit' => 'mg_l', 'digits' => 2],
-        3049 => ['ident' => 'SetpointRedox1', 'label' => 'Sollwert Redox 1', 'unit' => 'mV', 'digits' => 0],
-        3050 => ['ident' => 'SetpointRedox2', 'label' => 'Sollwert Redox 2', 'unit' => 'mV', 'digits' => 0],
-        3051 => ['ident' => 'LowerAlarmRedox1', 'label' => 'Untere Alarmgrenze Redox 1', 'unit' => 'mV', 'digits' => 0],
-        3052 => ['ident' => 'LowerAlarmRedox2', 'label' => 'Untere Alarmgrenze Redox 2', 'unit' => 'mV', 'digits' => 0],
-        3053 => ['ident' => 'UpperAlarmRedox1', 'label' => 'Obere Alarmgrenze Redox 1', 'unit' => 'mV', 'digits' => 0],
-        3054 => ['ident' => 'UpperAlarmRedox2', 'label' => 'Obere Alarmgrenze Redox 2', 'unit' => 'mV', 'digits' => 0],
-        3069 => ['ident' => 'LowerAlarmT1', 'label' => 'Untere Alarmgrenze T1', 'unit' => 'C', 'digits' => 1],
-        3070 => ['ident' => 'UpperAlarmT1', 'label' => 'Obere Alarmgrenze T1', 'unit' => 'C', 'digits' => 1],
-        3074 => ['ident' => 'LowerAlarmT2', 'label' => 'Untere Alarmgrenze T2', 'unit' => 'C', 'digits' => 1],
-        3075 => ['ident' => 'UpperAlarmT2', 'label' => 'Obere Alarmgrenze T2', 'unit' => 'C', 'digits' => 1],
-        3079 => ['ident' => 'LowerAlarmT3', 'label' => 'Untere Alarmgrenze T3', 'unit' => 'C', 'digits' => 1],
-        3080 => ['ident' => 'UpperAlarmT3', 'label' => 'Obere Alarmgrenze T3', 'unit' => 'C', 'digits' => 1],
-        3084 => ['ident' => 'BasicDosingAmountO2', 'label' => 'Grund-Dosiermenge O2', 'unit' => 'l', 'digits' => 1]
+        3001 => ['ident' => 'SetpointPH', 'label' => 'Sollwert pH', 'unit' => 'pH', 'writeProperty' => 'AllowWriteSetpointPH'],
+        3002 => ['ident' => 'LowerAlarmPH', 'label' => 'Untere Alarmgrenze pH', 'unit' => 'pH'],
+        3003 => ['ident' => 'UpperAlarmPH', 'label' => 'Obere Alarmgrenze pH', 'unit' => 'pH'],
+        3017 => ['ident' => 'SetpointChlorineBromine', 'label' => 'Sollwert Chlor / Brom', 'unit' => 'mg_l', 'writeProperty' => 'AllowWriteSetpointChlorineBromine'],
+        3018 => ['ident' => 'LowerAlarmChlorineBromine', 'label' => 'Untere Alarmgrenze Chlor / Brom', 'unit' => 'mg_l'],
+        3019 => ['ident' => 'UpperAlarmChlorineBromine', 'label' => 'Obere Alarmgrenze Chlor / Brom', 'unit' => 'mg_l'],
+        3049 => ['ident' => 'SetpointRedox1', 'label' => 'Sollwert Redox 1', 'unit' => 'mV', 'writeProperty' => 'AllowWriteSetpointRedox1'],
+        3050 => ['ident' => 'SetpointRedox2', 'label' => 'Sollwert Redox 2', 'unit' => 'mV', 'writeProperty' => 'AllowWriteSetpointRedox2'],
+        3051 => ['ident' => 'LowerAlarmRedox1', 'label' => 'Untere Alarmgrenze Redox 1', 'unit' => 'mV'],
+        3052 => ['ident' => 'LowerAlarmRedox2', 'label' => 'Untere Alarmgrenze Redox 2', 'unit' => 'mV'],
+        3053 => ['ident' => 'UpperAlarmRedox1', 'label' => 'Obere Alarmgrenze Redox 1', 'unit' => 'mV'],
+        3054 => ['ident' => 'UpperAlarmRedox2', 'label' => 'Obere Alarmgrenze Redox 2', 'unit' => 'mV'],
+        3069 => ['ident' => 'LowerAlarmT1', 'label' => 'Untere Alarmgrenze T1', 'unit' => 'C'],
+        3070 => ['ident' => 'UpperAlarmT1', 'label' => 'Obere Alarmgrenze T1', 'unit' => 'C'],
+        3074 => ['ident' => 'LowerAlarmT2', 'label' => 'Untere Alarmgrenze T2', 'unit' => 'C'],
+        3075 => ['ident' => 'UpperAlarmT2', 'label' => 'Obere Alarmgrenze T2', 'unit' => 'C'],
+        3079 => ['ident' => 'LowerAlarmT3', 'label' => 'Untere Alarmgrenze T3', 'unit' => 'C'],
+        3080 => ['ident' => 'UpperAlarmT3', 'label' => 'Obere Alarmgrenze T3', 'unit' => 'C'],
+        3084 => ['ident' => 'BasicDosingAmountO2', 'label' => 'Grund-Dosiermenge O2', 'unit' => 'l']
     ];
 
     private const ALARMS = [
@@ -59,6 +59,11 @@ class BayrolPoolmanagerXML extends IPSModule
         $this->RegisterPropertyInteger('Timeout', 5);
         $this->RegisterPropertyBoolean('ReadSetpoints', true);
         $this->RegisterPropertyBoolean('ReadAlarmList', true);
+        $this->RegisterPropertyBoolean('EnableWritePreparation', false);
+        $this->RegisterPropertyBoolean('AllowWriteSetpointPH', false);
+        $this->RegisterPropertyBoolean('AllowWriteSetpointChlorineBromine', false);
+        $this->RegisterPropertyBoolean('AllowWriteSetpointRedox1', false);
+        $this->RegisterPropertyBoolean('AllowWriteSetpointRedox2', false);
         $this->RegisterTimer(self::TIMER_NAME, 0, 'BPMXML_Update($_IPS["TARGET"]);');
     }
 
@@ -67,6 +72,7 @@ class BayrolPoolmanagerXML extends IPSModule
         parent::ApplyChanges();
         $this->RegisterProfiles();
         $this->RegisterVariables();
+        $this->ConfigureWritePreparation();
 
         if (trim($this->ReadPropertyString('Host')) === '') {
             $this->SetStatus(201);
@@ -117,8 +123,8 @@ class BayrolPoolmanagerXML extends IPSModule
             }
         }
 
-        $this->SetValueSafe('LastUpdate', time());
         $this->SetValueSafe('SuccessfulReads', $ok);
+        $this->SetValueSafe('LastUpdate', time());
         $this->SetValueSafe('LastError', implode("\n", array_slice($errors, 0, 25)));
 
         if ($ok > 0) {
@@ -130,6 +136,15 @@ class BayrolPoolmanagerXML extends IPSModule
         return false;
     }
 
+    public function RequestAction($Ident, $Value)
+    {
+        if (!$this->IsWritePrepared($Ident)) {
+            throw new Exception('Schreibzugriff fuer ' . $Ident . ' ist nicht freigegeben.');
+        }
+
+        throw new Exception('Schreibzugriff ist sicherheitshalber noch nicht implementiert. Die Freigabe ist nur vorbereitet.');
+    }
+
     private function ReadValueItem($type, $id, $ident, &$errors)
     {
         try {
@@ -137,7 +152,7 @@ class BayrolPoolmanagerXML extends IPSModule
             if (!array_key_exists('value', $item)) {
                 throw new Exception('Attribut value fehlt');
             }
-            $this->SetValueSafe($ident, ((float) $item['value']) / 1);
+            $this->SetValueSafe($ident, (float) $item['value']);
             return true;
         } catch (Exception $e) {
             $errors[] = $type . '.' . $id . ': ' . $e->getMessage();
@@ -170,8 +185,8 @@ class BayrolPoolmanagerXML extends IPSModule
             }
         }
         foreach (self::ALARMS as $id => $label) {
-            $this->RegisterVariableBoolean('AlarmActive' . $id, $label . ' aktiv', '~Alert', $pos++);
-            $this->RegisterVariableBoolean('AlarmDisplayed' . $id, $label . ' angezeigt', '~Alert', $pos++);
+            $this->RegisterVariableBoolean('AlarmActive' . $id, $label . ' aktiv', 'BPMXML.Alarm', $pos++);
+            $this->RegisterVariableBoolean('AlarmDisplayed' . $id, $label . ' angezeigt', 'BPMXML.Alarm', $pos++);
         }
         $this->RegisterVariableString('AlarmList', 'Alarmuebersicht', '', 900);
         $this->RegisterVariableInteger('SuccessfulReads', 'Erfolgreiche XML-Abfragen', '', 997);
@@ -192,6 +207,41 @@ class BayrolPoolmanagerXML extends IPSModule
             IPS_SetVariableProfileDigits($profile[0], $profile[2]);
             IPS_SetVariableProfileText($profile[0], '', ' ' . $profile[1]);
         }
+
+        if (!IPS_VariableProfileExists('BPMXML.Alarm')) {
+            IPS_CreateVariableProfile('BPMXML.Alarm', 0);
+        }
+        IPS_SetVariableProfileAssociation('BPMXML.Alarm', false, 'OK', '', 0x00AA00);
+        IPS_SetVariableProfileAssociation('BPMXML.Alarm', true, 'Alarm', '', 0xFF0000);
+    }
+
+    private function ConfigureWritePreparation()
+    {
+        foreach (self::SETPOINTS as $meta) {
+            if (!isset($meta['writeProperty'])) {
+                continue;
+            }
+            $id = @$this->GetIDForIdent($meta['ident']);
+            if ($id === false) {
+                continue;
+            }
+            if ($this->IsWritePrepared($meta['ident'])) {
+                $this->EnableAction($meta['ident']);
+            }
+        }
+    }
+
+    private function IsWritePrepared($ident)
+    {
+        if (!$this->ReadPropertyBoolean('EnableWritePreparation')) {
+            return false;
+        }
+        foreach (self::SETPOINTS as $meta) {
+            if ($meta['ident'] === $ident && isset($meta['writeProperty'])) {
+                return $this->ReadPropertyBoolean($meta['writeProperty']);
+            }
+        }
+        return false;
     }
 
     private function ProfileName($unit)
