@@ -1,0 +1,17 @@
+{
+  "elements": [
+    { "type": "ValidationTextBox", "name": "Host", "caption": "IP-Adresse / Hostname", "placeholder": "192.168.55.23" },
+    { "type": "NumberSpinner", "name": "Interval", "caption": "Aktualisierungsintervall Sekunden", "minimum": 0 },
+    { "type": "NumberSpinner", "name": "Timeout", "caption": "HTTP Timeout Sekunden", "minimum": 1 },
+    { "type": "CheckBox", "name": "ReadSetpoints", "caption": "Sollwerte / Grenzwerte auslesen" },
+    { "type": "CheckBox", "name": "ReadAlarmList", "caption": "Alarmuebersicht als Text auslesen" }
+  ],
+  "actions": [
+    { "type": "Button", "caption": "Jetzt aktualisieren", "onClick": "BPMXML_Update($id);" }
+  ],
+  "status": [
+    { "code": 102, "icon": "active", "caption": "Instanz ist aktiv" },
+    { "code": 201, "icon": "error", "caption": "Keine IP-Adresse / Hostname eingetragen" },
+    { "code": 202, "icon": "error", "caption": "PoolManager nicht erreichbar oder XML ungueltig" }
+  ]
+}
