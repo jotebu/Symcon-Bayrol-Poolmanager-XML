@@ -11,6 +11,7 @@ class BayrolPoolmanagerXML extends IPSModule
         'Setpoints' => ['name' => 'Sollwerte', 'pos' => 30],
         'Limits' => ['name' => 'Alarmgrenzen', 'pos' => 40],
         'Alarms' => ['name' => 'Alarme', 'pos' => 50],
+        'Explorer' => ['name' => 'XML Explorer', 'pos' => 800],
         'Service' => ['name' => 'Service', 'pos' => 900]
     ];
 
@@ -23,12 +24,10 @@ class BayrolPoolmanagerXML extends IPSModule
         ['xml' => '34.4069', 'ident' => 'Temperature2', 'name' => 'Temperatur T2', 'category' => 'Measurements', 'profile' => 'BPMXML.C', 'kind' => 'measurement'],
         ['xml' => '34.4071', 'ident' => 'Temperature3', 'name' => 'Temperatur T3', 'category' => 'Measurements', 'profile' => 'BPMXML.C', 'kind' => 'measurement'],
         ['xml' => '34.4077', 'ident' => 'O2DosedAmount', 'name' => 'O2 dosierte Menge', 'category' => 'Measurements', 'profile' => 'BPMXML.l', 'kind' => 'measurement'],
-
         ['xml' => '34.3001', 'ident' => 'SetpointPH', 'name' => 'Sollwert pH', 'category' => 'Setpoints', 'profile' => 'BPMXML.pH', 'kind' => 'setpoint', 'writeProperty' => 'AllowWriteSetpointPH'],
         ['xml' => '34.3017', 'ident' => 'SetpointChlorineBromine', 'name' => 'Sollwert Chlor / Brom', 'category' => 'Setpoints', 'profile' => 'BPMXML.mg_l', 'kind' => 'setpoint', 'writeProperty' => 'AllowWriteSetpointChlorineBromine'],
         ['xml' => '34.3049', 'ident' => 'SetpointRedox1', 'name' => 'Sollwert Redox 1', 'category' => 'Setpoints', 'profile' => 'BPMXML.mV', 'kind' => 'setpoint', 'writeProperty' => 'AllowWriteSetpointRedox1'],
         ['xml' => '34.3050', 'ident' => 'SetpointRedox2', 'name' => 'Sollwert Redox 2', 'category' => 'Setpoints', 'profile' => 'BPMXML.mV', 'kind' => 'setpoint', 'writeProperty' => 'AllowWriteSetpointRedox2'],
-
         ['xml' => '34.3002', 'ident' => 'LowerAlarmPH', 'name' => 'Untere Alarmgrenze pH', 'category' => 'Limits', 'profile' => 'BPMXML.pH', 'kind' => 'setpoint'],
         ['xml' => '34.3003', 'ident' => 'UpperAlarmPH', 'name' => 'Obere Alarmgrenze pH', 'category' => 'Limits', 'profile' => 'BPMXML.pH', 'kind' => 'setpoint'],
         ['xml' => '34.3018', 'ident' => 'LowerAlarmChlorineBromine', 'name' => 'Untere Alarmgrenze Chlor / Brom', 'category' => 'Limits', 'profile' => 'BPMXML.mg_l', 'kind' => 'setpoint'],
@@ -69,6 +68,12 @@ class BayrolPoolmanagerXML extends IPSModule
         $this->RegisterPropertyBoolean('ReadAlarmList', false);
         $this->RegisterPropertyBoolean('AutoUpdateAfterApply', false);
         $this->RegisterPropertyBoolean('DebugXml', false);
+        $this->RegisterPropertyInteger('ExplorerType', 34);
+        $this->RegisterPropertyInteger('ExplorerStart', 4000);
+        $this->RegisterPropertyInteger('ExplorerEnd', 4100);
+        $this->RegisterPropertyInteger('ExplorerMaxPerRun', 150);
+        $this->RegisterPropertyBoolean('ExplorerOnlyValid', true);
+        $this->RegisterPropertyBoolean('ExplorerStoreRaw', true);
         $this->RegisterPropertyBoolean('EnableWritePreparation', false);
         $this->RegisterPropertyBoolean('AllowWriteSetpointPH', false);
         $this->RegisterPropertyBoolean('AllowWriteSetpointChlorineBromine', false);
@@ -84,6 +89,7 @@ class BayrolPoolmanagerXML extends IPSModule
         $this->RegisterProfiles();
         $this->CreateStructure();
         $this->RegisterServiceVariables();
+        $this->RegisterExplorerVariables();
         $this->RegisterDataVariables();
         $this->ConfigureWritePreparation();
 
@@ -113,6 +119,95 @@ class BayrolPoolmanagerXML extends IPSModule
         return $this->UpdateInternal(true);
     }
 
+    public function RunExplorer()
+    {
+        if (trim($this->ReadPropertyString('Host')) === '') {
+            $this->SetStatus(201);
+            return false;
+        }
+
+        $type = $this->ReadPropertyInteger('ExplorerType');
+        $start = $this->ReadPropertyInteger('ExplorerStart');
+        $end = $this->ReadPropertyInteger('ExplorerEnd');
+        if ($end < $start) {
+            $tmp = $start;
+            $start = $end;
+            $end = $tmp;
+        }
+
+        $max = max(1, min($this->ReadPropertyInteger('ExplorerMaxPerRun'), 1000));
+        $onlyValid = $this->ReadPropertyBoolean('ExplorerOnlyValid');
+        $storeRaw = $this->ReadPropertyBoolean('ExplorerStoreRaw');
+        $results = [];
+        $csv = "xmlitem;valid;label;unit;value;active;displayed;attributes;duration_ms;error\n";
+        $scanned = 0;
+        $valid = 0;
+
+        for ($id = $start; $id <= $end; $id++) {
+            if ($scanned >= $max) {
+                break;
+            }
+            $scanned++;
+            $started = microtime(true);
+            $entry = [
+                'xmlitem' => $type . '.' . $id,
+                'valid' => false,
+                'attributes' => [],
+                'duration_ms' => 0,
+                'error' => ''
+            ];
+            try {
+                $raw = $this->FetchRawXml($type, $id);
+                $entry['duration_ms'] = round((microtime(true) - $started) * 1000, 1);
+                $xml = $this->ParseXmlString($raw);
+                if (isset($xml->item)) {
+                    foreach ($xml->item->attributes() as $key => $value) {
+                        $entry['attributes'][(string)$key] = (string)$value;
+                    }
+                    $entry['valid'] = true;
+                    $valid++;
+                    if ($storeRaw) {
+                        $entry['raw'] = substr(trim($raw), 0, 2000);
+                    }
+                } else {
+                    $entry['error'] = 'XML enthaelt kein item';
+                }
+            } catch (Exception $e) {
+                $entry['duration_ms'] = round((microtime(true) - $started) * 1000, 1);
+                $entry['error'] = $e->getMessage();
+            }
+
+            if (!$onlyValid || $entry['valid']) {
+                $results[] = $entry;
+                $a = $entry['attributes'];
+                $csv .= $this->Csv($entry['xmlitem']) . ';' . ($entry['valid'] ? '1' : '0') . ';' .
+                    $this->Csv(isset($a['label']) ? $a['label'] : '') . ';' .
+                    $this->Csv(isset($a['unit']) ? $a['unit'] : '') . ';' .
+                    $this->Csv(isset($a['value']) ? $a['value'] : '') . ';' .
+                    $this->Csv(isset($a['active']) ? $a['active'] : '') . ';' .
+                    $this->Csv(isset($a['displayed']) ? $a['displayed'] : '') . ';' .
+                    $this->Csv(json_encode($a, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) . ';' .
+                    $this->Csv((string)$entry['duration_ms']) . ';' .
+                    $this->Csv($entry['error']) . "\n";
+            }
+        }
+
+        $summary = 'Typ ' . $type . ', Bereich ' . $start . '-' . $end . ', abgefragt ' . $scanned . ', gueltig ' . $valid . ', gespeichert ' . count($results) . ', Zeit ' . date('Y-m-d H:i:s');
+        $this->SetValueByIdent('ExplorerSummary', $summary);
+        $this->SetValueByIdent('ExplorerCSV', $csv);
+        $this->SetValueByIdent('ExplorerJSON', json_encode($results, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $this->SetValueByIdent('ExplorerLastRun', time());
+        return true;
+    }
+
+    public function ClearExplorer()
+    {
+        $this->SetValueByIdent('ExplorerSummary', '');
+        $this->SetValueByIdent('ExplorerCSV', '');
+        $this->SetValueByIdent('ExplorerJSON', '');
+        $this->SetValueByIdent('ExplorerLastRun', 0);
+    }
+
     public function RequestAction($Ident, $Value)
     {
         if (!$this->IsWritePrepared($Ident)) {
@@ -127,10 +222,8 @@ class BayrolPoolmanagerXML extends IPSModule
             $this->SetStatus(201);
             return false;
         }
-
         $ok = 0;
         $errors = [];
-
         if (!$staticOnly) {
             foreach (self::ITEMS as $item) {
                 if ($item['kind'] === 'setpoint' && !$this->ReadPropertyBoolean('ReadSetpoints')) {
@@ -140,7 +233,6 @@ class BayrolPoolmanagerXML extends IPSModule
                     $ok++;
                 }
             }
-
             if ($this->ReadPropertyBoolean('ReadAlarms')) {
                 foreach (self::ALARMS as $id => $label) {
                     if ($this->ReadAlarmItem($id, $label, $errors)) {
@@ -148,7 +240,6 @@ class BayrolPoolmanagerXML extends IPSModule
                     }
                 }
             }
-
             if ($this->ReadPropertyBoolean('ReadAlarmList')) {
                 try {
                     $this->SetValueByIdent('AlarmList', $this->ReadAlarmListText());
@@ -158,13 +249,11 @@ class BayrolPoolmanagerXML extends IPSModule
                 }
             }
         }
-
-        $this->SetValueByIdent('Online', $ok > 0);
+        $this->SetValueByIdent('Online', $ok > 0 || $staticOnly);
         $this->SetValueByIdent('SuccessfulReads', $ok);
         $this->SetValueByIdent('LastUpdate', time());
         $this->SetValueByIdent('LastError', implode("\n", array_slice($errors, 0, 40)));
         $this->SetValueByIdent('WriteMode', $this->ReadPropertyBoolean('EnableWritePreparation'));
-
         if ($ok > 0 || $staticOnly) {
             $this->SetStatus(102);
             return true;
@@ -219,7 +308,6 @@ class BayrolPoolmanagerXML extends IPSModule
             $cat = $this->GetCategoryID($item['category'], self::CATEGORIES[$item['category']]['name'], self::CATEGORIES[$item['category']]['pos']);
             $this->RegisterFloat($cat, $item['ident'], $item['name'], $item['profile'], $pos++);
         }
-
         if ($this->ReadPropertyBoolean('ReadAlarms')) {
             $cat = $this->GetCategoryID('Alarms', 'Alarme', 50);
             $pos = 10;
@@ -239,6 +327,15 @@ class BayrolPoolmanagerXML extends IPSModule
         $this->RegisterInteger($cat, 'LastUpdate', 'Letzte Aktualisierung', '~UnixTimestamp', 30);
         $this->RegisterString($cat, 'LastError', 'Letzte Fehler / uebersprungene Adressen', '', 40);
         $this->RegisterBoolean($cat, 'WriteMode', 'Schreibmodus vorbereitet', 'BPMXML.WriteMode', 50);
+    }
+
+    private function RegisterExplorerVariables()
+    {
+        $cat = $this->GetCategoryID('Explorer', 'XML Explorer', 800);
+        $this->RegisterString($cat, 'ExplorerSummary', 'Scan-Zusammenfassung', '', 10);
+        $this->RegisterString($cat, 'ExplorerCSV', 'Scan-Ergebnis CSV', '', 20);
+        $this->RegisterString($cat, 'ExplorerJSON', 'Scan-Ergebnis JSON', '', 30);
+        $this->RegisterInteger($cat, 'ExplorerLastRun', 'Letzter Explorer-Lauf', '~UnixTimestamp', 40);
     }
 
     private function RegisterProfiles()
@@ -264,11 +361,7 @@ class BayrolPoolmanagerXML extends IPSModule
             if ($id === false) {
                 continue;
             }
-            if ($this->IsWritePrepared($item['ident'])) {
-                IPS_SetVariableCustomAction($id, $this->InstanceID);
-            } else {
-                IPS_SetVariableCustomAction($id, 0);
-            }
+            IPS_SetVariableCustomAction($id, $this->IsWritePrepared($item['ident']) ? $this->InstanceID : 0);
         }
     }
 
@@ -294,7 +387,7 @@ class BayrolPoolmanagerXML extends IPSModule
         $attributes = $xml->item->attributes();
         $result = [];
         foreach ($attributes as $key => $value) {
-            $result[$key] = (string)$value;
+            $result[(string)$key] = (string)$value;
         }
         return $result;
     }
@@ -314,6 +407,11 @@ class BayrolPoolmanagerXML extends IPSModule
 
     private function FetchXml($type, $id)
     {
+        return $this->ParseXmlString($this->FetchRawXml($type, $id));
+    }
+
+    private function FetchRawXml($type, $id)
+    {
         $host = trim($this->ReadPropertyString('Host'));
         $host = preg_replace('#^https?://#', '', $host);
         $url = 'http://' . $host . '/cgi-bin/webgui.fcgi?xmlitem=' . $type . '.' . $id;
@@ -329,7 +427,11 @@ class BayrolPoolmanagerXML extends IPSModule
         if ($raw === false || trim($raw) === '') {
             throw new Exception('keine HTTP-Antwort');
         }
-        $raw = trim($raw);
+        return trim($raw);
+    }
+
+    private function ParseXmlString($raw)
+    {
         $xmlStart = strpos($raw, '<');
         if ($xmlStart === false) {
             throw new Exception('Antwort ist kein XML: ' . substr($raw, 0, 100));
@@ -338,7 +440,7 @@ class BayrolPoolmanagerXML extends IPSModule
             $raw = substr($raw, $xmlStart);
         }
         if ($this->ReadPropertyBoolean('DebugXml')) {
-            $this->SendDebug('XML ' . $type . '.' . $id, substr($raw, 0, 500), 0);
+            $this->SendDebug('XML', substr($raw, 0, 500), 0);
         }
         $xml = @simplexml_load_string($raw);
         if (!$xml instanceof SimpleXMLElement) {
@@ -440,5 +542,10 @@ class BayrolPoolmanagerXML extends IPSModule
         }
         IPS_SetVariableProfileAssociation($name, false, $falseText, '', $falseColor);
         IPS_SetVariableProfileAssociation($name, true, $trueText, '', $trueColor);
+    }
+
+    private function Csv($value)
+    {
+        return '"' . str_replace('"', '""', (string)$value) . '"';
     }
 }
