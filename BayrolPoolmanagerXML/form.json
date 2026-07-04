@@ -11,6 +11,19 @@
     { "type": "CheckBox", "name": "ReadAlarmList", "caption": "Alarmuebersicht als Text lesen" },
     {
       "type": "ExpansionPanel",
+      "caption": "XML Explorer",
+      "items": [
+        { "type": "Label", "caption": "Durchsucht XML-Adressen des PoolManagers und speichert gefundene Antworten als CSV und JSON in der Instanz. Empfehlung: zuerst kleine Bereiche scannen, z. B. Typ 34 von 4000 bis 4100." },
+        { "type": "NumberSpinner", "name": "ExplorerType", "caption": "XML-Typ", "minimum": 0 },
+        { "type": "NumberSpinner", "name": "ExplorerStart", "caption": "Start-ID", "minimum": 0 },
+        { "type": "NumberSpinner", "name": "ExplorerEnd", "caption": "End-ID", "minimum": 0 },
+        { "type": "NumberSpinner", "name": "ExplorerMaxPerRun", "caption": "Max. Abfragen je Lauf", "minimum": 1 },
+        { "type": "CheckBox", "name": "ExplorerOnlyValid", "caption": "Nur gueltige XML-Antworten speichern" },
+        { "type": "CheckBox", "name": "ExplorerStoreRaw", "caption": "Roh-XML im JSON speichern" }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
       "caption": "Schreibfreigaben - sicher vorbereitet, aktuell noch kein Schreiben zum PoolManager",
       "items": [
         { "type": "Label", "caption": "Standard ist strikt read-only. Auch bei gesetzter Freigabe wird aktuell noch kein Wert geschrieben; die Schalter bereiten nur die spaetere sichere Schreibfunktion vor." },
@@ -23,7 +36,9 @@
     }
   ],
   "actions": [
-    { "type": "Button", "caption": "Jetzt aktualisieren", "onClick": "BPMXML_Update($id);" }
+    { "type": "Button", "caption": "Jetzt aktualisieren", "onClick": "BPMXML_Update($id);" },
+    { "type": "Button", "caption": "XML Explorer starten", "onClick": "BPMXML_RunExplorer($id);" },
+    { "type": "Button", "caption": "XML Explorer Ergebnisse loeschen", "onClick": "BPMXML_ClearExplorer($id);" }
   ],
   "status": [
     { "code": 102, "icon": "active", "caption": "Instanz ist aktiv" },
