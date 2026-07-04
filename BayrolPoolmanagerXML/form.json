@@ -1,15 +1,19 @@
 {
   "elements": [
     { "type": "ValidationTextBox", "name": "Host", "caption": "IP-Adresse / Hostname", "placeholder": "192.168.55.23" },
-    { "type": "NumberSpinner", "name": "Interval", "caption": "Aktualisierungsintervall Sekunden", "minimum": 0 },
+    { "type": "NumberSpinner", "name": "Interval", "caption": "Messwert-Intervall Sekunden", "minimum": 0 },
+    { "type": "NumberSpinner", "name": "StaticInterval", "caption": "Info-Intervall Minuten", "minimum": 0 },
     { "type": "NumberSpinner", "name": "Timeout", "caption": "HTTP Timeout Sekunden", "minimum": 1 },
+    { "type": "CheckBox", "name": "AutoUpdateAfterApply", "caption": "Nach Uebernehmen sofort aktualisieren" },
+    { "type": "CheckBox", "name": "DebugXml", "caption": "XML-Debug im Meldungsfenster aktivieren" },
     { "type": "CheckBox", "name": "ReadSetpoints", "caption": "Sollwerte / Grenzwerte lesen" },
+    { "type": "CheckBox", "name": "ReadAlarms", "caption": "Alarme lesen" },
     { "type": "CheckBox", "name": "ReadAlarmList", "caption": "Alarmuebersicht als Text lesen" },
     {
       "type": "ExpansionPanel",
-      "caption": "Schreibfreigaben - aktuell sicher vorbereitet, Schreiben noch deaktiviert",
+      "caption": "Schreibfreigaben - sicher vorbereitet, aktuell noch kein Schreiben zum PoolManager",
       "items": [
-        { "type": "Label", "caption": "Standard: Das Modul liest nur. Diese Freigaben sind fuer spaetere Schreibfunktionen vorbereitet und loesen aktuell noch keine Schreibbefehle zum PoolManager aus." },
+        { "type": "Label", "caption": "Standard ist strikt read-only. Auch bei gesetzter Freigabe wird aktuell noch kein Wert geschrieben; die Schalter bereiten nur die spaetere sichere Schreibfunktion vor." },
         { "type": "CheckBox", "name": "EnableWritePreparation", "caption": "Schreibfunktionen grundsaetzlich vorbereiten" },
         { "type": "CheckBox", "name": "AllowWriteSetpointPH", "caption": "Sollwert pH freigeben" },
         { "type": "CheckBox", "name": "AllowWriteSetpointChlorineBromine", "caption": "Sollwert Chlor / Brom freigeben" },
@@ -24,6 +28,6 @@
   "status": [
     { "code": 102, "icon": "active", "caption": "Instanz ist aktiv" },
     { "code": 201, "icon": "error", "caption": "Keine IP-Adresse / Hostname eingetragen" },
-    { "code": 202, "icon": "error", "caption": "PoolManager nicht erreichbar oder XML ungueltig" }
+    { "code": 202, "icon": "error", "caption": "PoolManager nicht erreichbar oder keine gueltige XML-Antwort" }
   ]
 }
