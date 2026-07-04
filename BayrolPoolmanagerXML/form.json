@@ -26,12 +26,13 @@
       "type": "ExpansionPanel",
       "caption": "Discovery Engine",
       "items": [
-        { "type": "Label", "caption": "Systematischer Scan ueber mehrere XML-Typen. Bitte klein starten, z. B. Typ 1-60 und ID 0-500 mit Limit 500." },
+        { "type": "Label", "caption": "Systematischer Scan ueber mehrere XML-Typen. Einzel-Scan oder Scheduler mit Resume-Funktion." },
         { "type": "NumberSpinner", "name": "DiscoveryTypeStart", "caption": "Start-Typ", "minimum": 0 },
         { "type": "NumberSpinner", "name": "DiscoveryTypeEnd", "caption": "End-Typ", "minimum": 0 },
         { "type": "NumberSpinner", "name": "DiscoveryIdStart", "caption": "Start-ID", "minimum": 0 },
         { "type": "NumberSpinner", "name": "DiscoveryIdEnd", "caption": "End-ID", "minimum": 0 },
         { "type": "NumberSpinner", "name": "DiscoveryMaxPerRun", "caption": "Max. Abfragen je Discovery-Lauf", "minimum": 1 },
+        { "type": "NumberSpinner", "name": "DiscoverySchedulerInterval", "caption": "Scheduler-Intervall Sekunden", "minimum": 1 },
         { "type": "CheckBox", "name": "DiscoveryOnlyValid", "caption": "Nur gueltige XML-Antworten speichern" },
         { "type": "CheckBox", "name": "DiscoveryStoreRaw", "caption": "Roh-XML speichern" }
       ]
@@ -59,6 +60,9 @@
     { "type": "Button", "caption": "Snapshot B speichern", "onClick": "BPMXML_StoreSnapshotB($id);" },
     { "type": "Button", "caption": "Snapshot A/B vergleichen", "onClick": "BPMXML_CompareSnapshots($id);" },
     { "type": "Button", "caption": "Discovery starten", "onClick": "BPMXML_RunDiscovery($id);" },
+    { "type": "Button", "caption": "Discovery Scheduler starten / Resume", "onClick": "BPMXML_StartDiscoveryScheduler($id);" },
+    { "type": "Button", "caption": "Discovery Scheduler stoppen", "onClick": "BPMXML_StopDiscoveryScheduler($id);" },
+    { "type": "Button", "caption": "Discovery Batch jetzt", "onClick": "BPMXML_RunDiscoveryBatch($id);" },
     { "type": "Button", "caption": "Discovery Snapshot A", "onClick": "BPMXML_StoreDiscoverySnapshotA($id);" },
     { "type": "Button", "caption": "Discovery Snapshot B", "onClick": "BPMXML_StoreDiscoverySnapshotB($id);" },
     { "type": "Button", "caption": "Discovery A/B vergleichen", "onClick": "BPMXML_CompareDiscoverySnapshots($id);" },
