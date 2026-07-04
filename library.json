@@ -1,0 +1,12 @@
+{
+  "id": "{8F0E64B2-AD79-4B62-A70B-B0D3BD456A9D}",
+  "name": "Bayrol PoolManager XML",
+  "author": "jotebu / OpenAI",
+  "url": "https://github.com/jotebu/Symcon-Bayrol-Poolmanager-XML",
+  "compatibility": {
+    "version": "6.0"
+  },
+  "version": "0.1",
+  "build": 1,
+  "date": 1783123200
+}
