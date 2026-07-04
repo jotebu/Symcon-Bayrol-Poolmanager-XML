@@ -13,13 +13,27 @@
       "type": "ExpansionPanel",
       "caption": "XML Explorer",
       "items": [
-        { "type": "Label", "caption": "Freier Scan oder vordefinierte Bereiche. Ergebnisse werden als CSV/JSON im Objektbaum gespeichert. Snapshot A/B dient zum Erkennen geaenderter XML-Adressen nach einer Bedienhandlung am PM5." },
+        { "type": "Label", "caption": "Freier Scan oder vordefinierte Bereiche. Snapshot A/B dient zum Erkennen geaenderter XML-Adressen nach einer Bedienhandlung am PM5." },
         { "type": "NumberSpinner", "name": "ExplorerType", "caption": "XML-Typ", "minimum": 0 },
         { "type": "NumberSpinner", "name": "ExplorerStart", "caption": "Start-ID", "minimum": 0 },
         { "type": "NumberSpinner", "name": "ExplorerEnd", "caption": "End-ID", "minimum": 0 },
         { "type": "NumberSpinner", "name": "ExplorerMaxPerRun", "caption": "Max. Abfragen je Lauf", "minimum": 1 },
         { "type": "CheckBox", "name": "ExplorerOnlyValid", "caption": "Nur gueltige XML-Antworten speichern" },
         { "type": "CheckBox", "name": "ExplorerStoreRaw", "caption": "Roh-XML im JSON speichern" }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "caption": "Discovery Engine",
+      "items": [
+        { "type": "Label", "caption": "Systematischer Scan ueber mehrere XML-Typen. Bitte klein starten, z. B. Typ 1-60 und ID 0-500 mit Limit 500." },
+        { "type": "NumberSpinner", "name": "DiscoveryTypeStart", "caption": "Start-Typ", "minimum": 0 },
+        { "type": "NumberSpinner", "name": "DiscoveryTypeEnd", "caption": "End-Typ", "minimum": 0 },
+        { "type": "NumberSpinner", "name": "DiscoveryIdStart", "caption": "Start-ID", "minimum": 0 },
+        { "type": "NumberSpinner", "name": "DiscoveryIdEnd", "caption": "End-ID", "minimum": 0 },
+        { "type": "NumberSpinner", "name": "DiscoveryMaxPerRun", "caption": "Max. Abfragen je Discovery-Lauf", "minimum": 1 },
+        { "type": "CheckBox", "name": "DiscoveryOnlyValid", "caption": "Nur gueltige XML-Antworten speichern" },
+        { "type": "CheckBox", "name": "DiscoveryStoreRaw", "caption": "Roh-XML speichern" }
       ]
     },
     {
@@ -44,8 +58,12 @@
     { "type": "Button", "caption": "Snapshot A speichern", "onClick": "BPMXML_StoreSnapshotA($id);" },
     { "type": "Button", "caption": "Snapshot B speichern", "onClick": "BPMXML_StoreSnapshotB($id);" },
     { "type": "Button", "caption": "Snapshot A/B vergleichen", "onClick": "BPMXML_CompareSnapshots($id);" },
+    { "type": "Button", "caption": "Discovery starten", "onClick": "BPMXML_RunDiscovery($id);" },
+    { "type": "Button", "caption": "Discovery Snapshot A", "onClick": "BPMXML_StoreDiscoverySnapshotA($id);" },
+    { "type": "Button", "caption": "Discovery Snapshot B", "onClick": "BPMXML_StoreDiscoverySnapshotB($id);" },
+    { "type": "Button", "caption": "Discovery A/B vergleichen", "onClick": "BPMXML_CompareDiscoverySnapshots($id);" },
     { "type": "Button", "caption": "PHP-Definition aus Scan erzeugen", "onClick": "BPMXML_GenerateDefinitionFromExplorer($id);" },
-    { "type": "Button", "caption": "XML Explorer Ergebnisse loeschen", "onClick": "BPMXML_ClearExplorer($id);" }
+    { "type": "Button", "caption": "Explorer / Discovery Ergebnisse loeschen", "onClick": "BPMXML_ClearExplorer($id);" }
   ],
   "status": [
     { "code": 102, "icon": "active", "caption": "Instanz ist aktiv" },
