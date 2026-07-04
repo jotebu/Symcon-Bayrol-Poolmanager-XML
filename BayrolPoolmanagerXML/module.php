@@ -144,26 +144,67 @@ class BayrolPoolmanagerXML extends IPSModule
             $this->SetValueByIdent('ExplorerCompare', 'Snapshot A oder B fehlt / ist kein gueltiges JSON.');
             return false;
         }
+
         $ma = $this->MapExplorerResult($a);
         $mb = $this->MapExplorerResult($b);
-        $lines = [];
+        $relevant = [];
+        $ignored = [];
+        $all = [];
+
         foreach ($mb as $xmlitem => $entryB) {
             if (!isset($ma[$xmlitem])) {
-                $lines[] = '+ ' . $xmlitem . ' neu: ' . json_encode($entryB['attributes'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $line = '+ ' . $this->FormatExplorerEntry($xmlitem, [], $entryB['attributes'] ?? []);
+                $relevant[] = $line;
+                $all[] = $line;
                 continue;
             }
-            $old = json_encode($ma[$xmlitem]['attributes'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $new = json_encode($entryB['attributes'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            if ($old !== $new) {
-                $lines[] = '* ' . $xmlitem . ' geaendert: ' . $old . ' -> ' . $new;
+
+            $oldAttr = $ma[$xmlitem]['attributes'] ?? [];
+            $newAttr = $entryB['attributes'] ?? [];
+            $old = json_encode($oldAttr, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $new = json_encode($newAttr, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if ($old === $new) {
+                continue;
+            }
+
+            $line = '* ' . $this->FormatExplorerEntry($xmlitem, $oldAttr, $newAttr);
+            $all[] = $line;
+            if ($this->IsRelevantSwitchChange($oldAttr, $newAttr)) {
+                $relevant[] = $line;
+            } else {
+                $ignored[] = $line;
             }
         }
+
         foreach ($ma as $xmlitem => $entryA) {
             if (!isset($mb[$xmlitem])) {
-                $lines[] = '- ' . $xmlitem . ' fehlt in B';
+                $line = '- ' . $this->FormatExplorerEntry($xmlitem, $entryA['attributes'] ?? [], []);
+                $relevant[] = $line;
+                $all[] = $line;
             }
         }
-        $this->SetValueByIdent('ExplorerCompare', count($lines) ? implode("\n", $lines) : 'Keine Unterschiede gefunden.');
+
+        $text = [];
+        $text[] = 'Relevante Status-/Schalt-Aenderungen: ' . count($relevant);
+        $text[] = 'Ignorierte Messwert-Drift: ' . count($ignored);
+        $text[] = 'Alle Aenderungen: ' . count($all);
+        $text[] = '';
+        if (count($relevant) > 0) {
+            $text[] = '--- RELEVANT ---';
+            $text[] = implode("\n", $relevant);
+        } else {
+            $text[] = 'Keine relevanten Status-/Schalt-Aenderungen erkannt.';
+        }
+        if (count($ignored) > 0) {
+            $text[] = '';
+            $text[] = '--- IGNORIERT: Messwert-Drift / analoge Werte ---';
+            $text[] = implode("\n", array_slice($ignored, 0, 60));
+            if (count($ignored) > 60) {
+                $text[] = '... weitere ignorierte Aenderungen: ' . (count($ignored) - 60);
+            }
+        }
+
+        $this->SetValueByIdent('ExplorerCompare', implode("\n", $text));
         return true;
     }
 
@@ -343,6 +384,7 @@ class BayrolPoolmanagerXML extends IPSModule
     {
         $this->CreateFloatProfile('BPMXML.pH', 'pH', 2); $this->CreateFloatProfile('BPMXML.mg_l', 'mg/l', 2); $this->CreateFloatProfile('BPMXML.mV', 'mV', 0);
         $this->CreateFloatProfile('BPMXML.C', ' C', 1); $this->CreateFloatProfile('BPMXML.V', 'V', 2); $this->CreateFloatProfile('BPMXML.l', 'l', 1);
+        $this->CreateFloatProfile('BPMXML.percent', '%', 0); $this->CreateFloatProfile('BPMXML.min', 'min', 0); $this->CreateFloatProfile('BPMXML.microA', 'µA', 2); $this->CreateFloatProfile('BPMXML.mA', 'mA', 1); $this->CreateFloatProfile('BPMXML.mScm', 'mS/cm', 1);
         $this->CreateBoolProfile('BPMXML.Alarm', 'OK', 'Alarm', 0x00AA00, 0xFF0000); $this->CreateBoolProfile('BPMXML.Online', 'Offline', 'Online', 0xFF0000, 0x00AA00); $this->CreateBoolProfile('BPMXML.WriteMode', 'Read-only', 'Freigegeben', 0x00AA00, 0xFFA500);
     }
 
@@ -427,6 +469,62 @@ class BayrolPoolmanagerXML extends IPSModule
     private function CreateBoolProfile($name, $falseText, $trueText, $falseColor, $trueColor) { if (!IPS_VariableProfileExists($name)) { IPS_CreateVariableProfile($name, 0); } IPS_SetVariableProfileAssociation($name, false, $falseText, '', $falseColor); IPS_SetVariableProfileAssociation($name, true, $trueText, '', $trueColor); }
     private function Csv($value) { return '"' . str_replace('"', '""', (string)$value) . '"'; }
     private function MapExplorerResult($data) { $map = []; foreach ($data as $entry) { if (isset($entry['xmlitem'])) { $map[$entry['xmlitem']] = $entry; } } return $map; }
-    private function SuggestProfile($unit, $attributes) { if ($unit === 'pH') { return 'BPMXML.pH'; } if ($unit === 'mg/l') { return 'BPMXML.mg_l'; } if ($unit === 'mV') { return 'BPMXML.mV'; } if ($unit === 'C' || $unit === '°C') { return 'BPMXML.C'; } if ($unit === 'V') { return 'BPMXML.V'; } if ($unit === 'l') { return 'BPMXML.l'; } return isset($attributes['value']) ? '' : 'BPMXML.Alarm'; }
+    private function SuggestProfile($unit, $attributes) { if ($unit === 'pH') { return 'BPMXML.pH'; } if ($unit === 'mg/l') { return 'BPMXML.mg_l'; } if ($unit === 'mV') { return 'BPMXML.mV'; } if ($unit === 'C' || $unit === '°C') { return 'BPMXML.C'; } if ($unit === 'V') { return 'BPMXML.V'; } if ($unit === 'l') { return 'BPMXML.l'; } if ($unit === '%') { return 'BPMXML.percent'; } if ($unit === 'min') { return 'BPMXML.min'; } if ($unit === 'µA') { return 'BPMXML.microA'; } if ($unit === 'mA') { return 'BPMXML.mA'; } if ($unit === 'mS/cm') { return 'BPMXML.mScm'; } return isset($attributes['value']) ? '' : 'BPMXML.Alarm'; }
     private function MakeIdent($label, $xmlitem) { $base = preg_replace('/[^A-Za-z0-9]/', '', ucwords((string)$label)); if ($base === '') { $base = 'XML' . str_replace('.', '_', $xmlitem); } if (preg_match('/^[0-9]/', $base)) { $base = 'XML' . $base; } return $base; }
+
+    private function IsRelevantSwitchChange($oldAttr, $newAttr)
+    {
+        $label = strtolower(($newAttr['label'] ?? '') . ' ' . ($oldAttr['label'] ?? ''));
+        $unit = (string)($newAttr['unit'] ?? $oldAttr['unit'] ?? '');
+        $oldValue = (string)($oldAttr['value'] ?? '');
+        $newValue = (string)($newAttr['value'] ?? '');
+
+        if (isset($newAttr['active']) || isset($newAttr['displayed']) || isset($oldAttr['active']) || isset($oldAttr['displayed'])) {
+            return true;
+        }
+
+        $keywords = ['status', 'betrieb', 'betriebsart', 'out', 'relais', 'licht', 'lampe', 'pumpe', 'filter', 'flock', 'heizung', 'solar', 'eco', 'salz', 'elektrolyse', 'cover', 'abdeckung', 'ventil'];
+        $keywordHit = false;
+        foreach ($keywords as $keyword) {
+            if (strpos($label, $keyword) !== false) {
+                $keywordHit = true;
+                break;
+            }
+        }
+
+        if ($keywordHit && $unit === '' && in_array($oldValue, ['0', '1'], true) && in_array($newValue, ['0', '1'], true) && $oldValue !== $newValue) {
+            return true;
+        }
+
+        if ($keywordHit && $oldValue !== $newValue && !$this->IsAnalogDrift($oldAttr, $newAttr)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function IsAnalogDrift($oldAttr, $newAttr)
+    {
+        $unit = (string)($newAttr['unit'] ?? $oldAttr['unit'] ?? '');
+        $oldValue = (string)($oldAttr['value'] ?? '');
+        $newValue = (string)($newAttr['value'] ?? '');
+        if ($oldValue === $newValue) {
+            return false;
+        }
+        $analogUnits = ['pH', 'mV', 'mg/l', 'µA', 'mA', '°C', 'C', 'V', 'l', 'min', '%', 'mS/cm'];
+        if (in_array($unit, $analogUnits, true) && is_numeric($oldValue) && is_numeric($newValue)) {
+            return true;
+        }
+        return false;
+    }
+
+    private function FormatExplorerEntry($xmlitem, $oldAttr, $newAttr)
+    {
+        $label = $newAttr['label'] ?? $oldAttr['label'] ?? '';
+        $unit = $newAttr['unit'] ?? $oldAttr['unit'] ?? '';
+        $oldValue = $oldAttr['value'] ?? ($oldAttr['active'] ?? '');
+        $newValue = $newAttr['value'] ?? ($newAttr['active'] ?? '');
+        $suffix = $unit !== '' ? ' ' . $unit : '';
+        return trim($xmlitem . ' ' . $label . ': ' . $oldValue . $suffix . ' -> ' . $newValue . $suffix);
+    }
 }
