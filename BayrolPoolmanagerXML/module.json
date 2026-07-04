@@ -1,0 +1,14 @@
+{
+  "id": "{E8DB7F4C-67D1-4E1B-9964-06A8F4D7F831}",
+  "name": "Bayrol PoolManager XML",
+  "type": 3,
+  "vendor": "Bayrol",
+  "aliases": [
+    "Bayrol PoolManager 5 XML",
+    "PM5 XML"
+  ],
+  "parentRequirements": [],
+  "childRequirements": [],
+  "implemented": [],
+  "prefix": "BPMXML"
+}
