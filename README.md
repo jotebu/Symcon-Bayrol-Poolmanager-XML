@@ -2,9 +2,13 @@
 
 IP-Symcon Modul fuer den BAYROL PoolManager 5 / Analyt XML-Zugriff.
 
-## Status
+## Version
 
-Aktueller Entwicklungsstand: **Version 2.1 Discovery Engine**
+Aktueller Entwicklungsstand: **2.1.0**
+
+Die sichtbare IP-Symcon-Version steht in `library.json`. Zusaetzlich gibt es eine `VERSION`-Datei und `CHANGELOG.md`.
+
+## Status
 
 Das Modul liest regulaer die bekannten PM5-Messwerte, Sollwerte, Alarmgrenzen und Alarmzustaende aus. Zusaetzlich enthaelt es eine Discovery Engine, mit der bislang unbekannte XML-Adressen des PM5 systematisch gesucht und klassifiziert werden koennen.
 
@@ -27,6 +31,30 @@ Das Modul arbeitet standardmaessig rein lesend. Schreibfreigaben sind im Modul v
 - Discovery Scheduler mit Resume-Cursor und Fortschritt
 - CSV-/JSON-Ausgabe im Objektbaum
 - PHP-Definitionsvorschlag fuer neue Modulobjekte
+
+## Repository-Struktur
+
+```text
+library.json
+VERSION
+CHANGELOG.md
+docs/
+  ARCHITECTURE.md
+  TESTPLAN_2.1.0.md
+BayrolPoolmanagerXML/
+  module.json
+  form.json
+  module.php
+  lib/
+    XmlClient.php
+    DiscoveryClassifier.php
+    DiscoveryDatabase.php
+    SnapshotComparator.php
+    DiscoveryExporter.php
+    DiscoverySchedulerState.php
+```
+
+`module.php` bleibt aktuell der stabile IP-Symcon-Einstiegspunkt. Die Dateien unter `lib/` bilden die Zielstruktur fuer die schrittweise Auslagerung der einzelnen Verantwortlichkeiten.
 
 ## Discovery Engine 2.1
 
