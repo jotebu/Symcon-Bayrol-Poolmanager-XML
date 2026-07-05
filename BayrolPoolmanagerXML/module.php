@@ -16,6 +16,7 @@ class BayrolPoolmanagerXML extends IPSModule
         'Alarms' => ['name' => 'Alarme', 'pos' => 50],
         'Explorer' => ['name' => 'XML Explorer', 'pos' => 800],
         'Discovery' => ['name' => 'Discovery Engine', 'pos' => 850],
+        'Learning' => ['name' => 'Learning', 'pos' => 860],
         'Service' => ['name' => 'Service', 'pos' => 900]
     ];
 
@@ -104,6 +105,7 @@ class BayrolPoolmanagerXML extends IPSModule
         $this->RegisterServiceVariables();
         $this->RegisterExplorerVariables();
         $this->RegisterDiscoveryVariables();
+        $this->RegisterLearningVariables();
         $this->RegisterDataVariables();
         $this->ConfigureWritePreparation();
 
@@ -129,6 +131,65 @@ class BayrolPoolmanagerXML extends IPSModule
     public function RunExplorerSetpoints() { return $this->RunExplorerRange(34, 3000, 3100, 'Preset Sollwerte 34.3000-3100'); }
     public function RunExplorerAlarms() { return $this->RunExplorerRange(44, 2000, 2050, 'Preset Alarme 44.2000-2050'); }
     public function RunDiscovery() { return $this->RunDiscoveryRange($this->ReadPropertyInteger('DiscoveryTypeStart'), $this->ReadPropertyInteger('DiscoveryTypeEnd'), $this->ReadPropertyInteger('DiscoveryIdStart'), $this->ReadPropertyInteger('DiscoveryIdEnd'), 'Discovery'); }
+    public function StartLearningLight() { return $this->StartLearningAction('light'); }
+    public function StartLearningFilterPump() { return $this->StartLearningAction('filter_pump'); }
+    public function StartLearningHeater() { return $this->StartLearningAction('heater'); }
+    public function StartLearningSolar() { return $this->StartLearningAction('solar'); }
+    public function StartLearningEco() { return $this->StartLearningAction('eco'); }
+    public function StartLearningFlockmatic() { return $this->StartLearningAction('flockmatic'); }
+
+    public function LearningAddSnapshot()
+    {
+        $session = $this->ReadLearningSession();
+        if (!$this->IsLearningSession($session)) {
+            return $this->StoreLearningMessage('Snapshot', 'Keine gueltige Learning-Session. Bitte zuerst Learning starten.', false);
+        }
+
+        $snapshot = json_decode((string)$this->GetValueByIdent('DiscoveryJSON'), true);
+        if (!is_array($snapshot)) {
+            return $this->StoreLearningMessage('Snapshot', 'DiscoveryJSON fehlt oder ist kein gueltiges JSON. Bitte zuerst Discovery ausfuehren.', false);
+        }
+
+        $assistant = $this->LearningAssistant();
+        $session = $assistant->addSnapshot($session, $snapshot);
+        $this->SetValueByIdent('LearningSession', $this->EncodeJson($session));
+        $this->SetValueByIdent('LearningInstruction', $assistant->nextInstruction($session));
+        $this->SetValueByIdent('LearningLastAction', 'Snapshot gespeichert: ' . count($session['snapshots'] ?? []));
+        $this->SetValueByIdent('LearningLastUpdate', time());
+        return true;
+    }
+
+    public function LearningAnalyze()
+    {
+        $session = $this->ReadLearningSession();
+        if (!$this->IsLearningSession($session)) {
+            $result = ['summary' => 'Keine gueltige Learning-Session. Bitte zuerst Learning starten.', 'candidates' => []];
+            $this->SetValueByIdent('LearningCandidates', $this->EncodeJson($result));
+            $this->SetValueByIdent('LearningInstruction', $result['summary']);
+            $this->SetValueByIdent('LearningLastAction', 'Analyse');
+            $this->SetValueByIdent('LearningLastUpdate', time());
+            return false;
+        }
+
+        $result = $this->LearningAssistant()->analyze($session);
+        $session['result'] = $result;
+        $this->SetValueByIdent('LearningSession', $this->EncodeJson($session));
+        $this->SetValueByIdent('LearningCandidates', $this->EncodeJson($result));
+        $this->SetValueByIdent('LearningInstruction', (string)($result['summary'] ?? 'Learning Analyse abgeschlossen.'));
+        $this->SetValueByIdent('LearningLastAction', 'Analyse');
+        $this->SetValueByIdent('LearningLastUpdate', time());
+        return true;
+    }
+
+    public function LearningReset()
+    {
+        $this->SetValueByIdent('LearningSession', '{}');
+        $this->SetValueByIdent('LearningInstruction', 'Learning zurueckgesetzt. Bitte Workflow starten.');
+        $this->SetValueByIdent('LearningCandidates', '{}');
+        $this->SetValueByIdent('LearningLastAction', 'Zurueckgesetzt');
+        $this->SetValueByIdent('LearningLastUpdate', time());
+        return true;
+    }
 
     public function StartDiscoveryScheduler()
     {
@@ -223,6 +284,13 @@ class BayrolPoolmanagerXML extends IPSModule
     private function RegisterServiceVariables() { $cat = $this->GetCategoryID('Service', 'Service', 900); $this->RegisterBoolean($cat, 'Online', 'Kommunikation online', 'BPMXML.Online', 10); $this->RegisterInteger($cat, 'SuccessfulReads', 'Erfolgreiche XML-Abfragen', '', 20); $this->RegisterInteger($cat, 'LastUpdate', 'Letzte Aktualisierung', '~UnixTimestamp', 30); $this->RegisterString($cat, 'LastError', 'Letzte Fehler / uebersprungene Adressen', '', 40); $this->RegisterBoolean($cat, 'WriteMode', 'Schreibmodus vorbereitet', 'BPMXML.WriteMode', 50); }
     private function RegisterExplorerVariables() { $cat = $this->GetCategoryID('Explorer', 'XML Explorer', 800); $this->RegisterString($cat, 'ExplorerSummary', 'Scan-Zusammenfassung', '', 10); $this->RegisterString($cat, 'ExplorerCSV', 'Scan-Ergebnis CSV', '', 20); $this->RegisterString($cat, 'ExplorerJSON', 'Scan-Ergebnis JSON', '', 30); $this->RegisterInteger($cat, 'ExplorerLastRun', 'Letzter Explorer-Lauf', '~UnixTimestamp', 40); $this->RegisterString($cat, 'ExplorerSnapshotA', 'Snapshot A JSON', '', 50); $this->RegisterString($cat, 'ExplorerSnapshotB', 'Snapshot B JSON', '', 60); $this->RegisterString($cat, 'ExplorerCompare', 'Snapshot Vergleich', '', 70); $this->RegisterString($cat, 'ExplorerDefinition', 'PHP-Definition Vorschlag', '', 80); }
     private function RegisterDiscoveryVariables() { $cat = $this->GetCategoryID('Discovery', 'Discovery Engine', 850); $this->RegisterString($cat, 'DiscoverySummary', 'Discovery Zusammenfassung', '', 10); $this->RegisterString($cat, 'DiscoveryCSV', 'Discovery CSV', '', 20); $this->RegisterString($cat, 'DiscoveryJSON', 'Discovery JSON aktueller Lauf', '', 30); $this->RegisterString($cat, 'DiscoveryDB', 'Discovery Datenbank JSON', '', 40); $this->RegisterString($cat, 'DiscoverySnapshotA', 'Discovery Snapshot A JSON', '', 50); $this->RegisterString($cat, 'DiscoverySnapshotB', 'Discovery Snapshot B JSON', '', 60); $this->RegisterString($cat, 'DiscoveryCompare', 'Discovery Snapshot Vergleich', '', 70); $this->RegisterString($cat, 'DiscoveryReport', 'Discovery Report', '', 80); $this->RegisterInteger($cat, 'DiscoveryLastRun', 'Letzter Discovery-Lauf', '~UnixTimestamp', 90); $this->RegisterBoolean($cat, 'DiscoverySchedulerRunning', 'Scheduler aktiv', 'BPMXML.Online', 100); $this->RegisterInteger($cat, 'DiscoveryCursorType', 'Cursor Typ', '', 110); $this->RegisterInteger($cat, 'DiscoveryCursorId', 'Cursor ID', '', 120); $this->RegisterInteger($cat, 'DiscoveryProgress', 'Discovery Fortschritt', 'BPMXML.percent_int', 130); }
+    private function RegisterLearningVariables() { $cat = $this->GetCategoryID('Learning', 'Learning', 860); $this->RegisterString($cat, 'LearningSession', 'LearningSession JSON', '', 10); $this->RegisterString($cat, 'LearningInstruction', 'LearningInstruction', '', 20); $this->RegisterString($cat, 'LearningCandidates', 'LearningCandidates JSON', '', 30); $this->RegisterString($cat, 'LearningLastAction', 'LearningLastAction', '', 40); $this->RegisterInteger($cat, 'LearningLastUpdate', 'LearningLastUpdate', '~UnixTimestamp', 50); }
+    private function StartLearningAction($actionKey) { try { $assistant = $this->LearningAssistant(); $session = $assistant->createSession((string)$actionKey); $this->SetValueByIdent('LearningSession', $this->EncodeJson($session)); $this->SetValueByIdent('LearningInstruction', $assistant->nextInstruction($session)); $this->SetValueByIdent('LearningCandidates', '{}'); $this->SetValueByIdent('LearningLastAction', 'Start: ' . ($session['name'] ?? $actionKey)); $this->SetValueByIdent('LearningLastUpdate', time()); return true; } catch (Exception $e) { return $this->StoreLearningMessage('Start', $e->getMessage(), false); } }
+    private function LearningAssistant() { return new BPMXML_LearningAssistant(); }
+    private function ReadLearningSession() { $session = json_decode((string)$this->GetValueByIdent('LearningSession'), true); return is_array($session) ? $session : []; }
+    private function IsLearningSession($session) { return is_array($session) && isset($session['action']) && isset($session['snapshots']) && is_array($session['snapshots']); }
+    private function StoreLearningMessage($action, $message, $result) { $this->SetValueByIdent('LearningInstruction', (string)$message); $this->SetValueByIdent('LearningLastAction', (string)$action); $this->SetValueByIdent('LearningLastUpdate', time()); return $result; }
+    private function EncodeJson($data) { return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); }
     private function RegisterProfiles() { $this->CreateFloatProfile('BPMXML.pH', 'pH', 2); $this->CreateFloatProfile('BPMXML.mg_l', 'mg/l', 2); $this->CreateFloatProfile('BPMXML.mV', 'mV', 0); $this->CreateFloatProfile('BPMXML.C', ' C', 1); $this->CreateFloatProfile('BPMXML.V', 'V', 2); $this->CreateFloatProfile('BPMXML.l', 'l', 1); $this->CreateFloatProfile('BPMXML.percent', '%', 0); $this->CreateIntegerProfile('BPMXML.percent_int', '%'); $this->CreateFloatProfile('BPMXML.min', 'min', 0); $this->CreateFloatProfile('BPMXML.microA', 'µA', 2); $this->CreateFloatProfile('BPMXML.mA', 'mA', 1); $this->CreateFloatProfile('BPMXML.mScm', 'mS/cm', 1); $this->CreateBoolProfile('BPMXML.Alarm', 'OK', 'Alarm', 0x00AA00, 0xFF0000); $this->CreateBoolProfile('BPMXML.Online', 'Offline', 'Online', 0xFF0000, 0x00AA00); $this->CreateBoolProfile('BPMXML.WriteMode', 'Read-only', 'Freigegeben', 0x00AA00, 0xFFA500); }
     private function ConfigureWritePreparation() { foreach (self::ITEMS as $item) { if (!isset($item['writeProperty'])) { continue; } $id = $this->FindObjectByIdent($item['ident']); if ($id === false) { continue; } IPS_SetVariableCustomAction($id, $this->IsWritePrepared($item['ident']) ? $this->InstanceID : 0); } }
     private function IsWritePrepared($ident) { if (!$this->ReadPropertyBoolean('EnableWritePreparation')) { return false; } foreach (self::ITEMS as $item) { if ($item['ident'] === $ident && isset($item['writeProperty'])) { return $this->ReadPropertyBoolean($item['writeProperty']); } } return false; }
